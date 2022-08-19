@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElectricConsumption", "ElectricConsumption\ElectricConsumption.csproj", "{AE6EC8CF-0E88-4696-A3FF-FE21D6581050}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AE6EC8CF-0E88-4696-A3FF-FE21D6581050}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE6EC8CF-0E88-4696-A3FF-FE21D6581050}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE6EC8CF-0E88-4696-A3FF-FE21D6581050}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE6EC8CF-0E88-4696-A3FF-FE21D6581050}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
