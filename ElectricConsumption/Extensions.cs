@@ -21,7 +21,25 @@ public static class Extensions
         
         return currentValue;
     }
-    
+
+    public static string ToMonth(this int month) =>
+        month switch
+        {
+            1 => "January",
+            2 => "February",
+            3 => "March",
+            4 => "April",
+            5 => "May",
+            6 => "June",
+            7 => "July",
+            8 => "August",
+            9 => "September",
+            10 => "October",
+            11 => "November",
+            12 => "December",
+            _ => string.Empty
+        };
+
     public static bool IsOffPeak(this DateTime date, TimeSpan startTime, TimeSpan endTime)
     {
         return startTime.IsBeforeMidnight()
