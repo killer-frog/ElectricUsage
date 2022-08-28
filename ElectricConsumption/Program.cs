@@ -1,13 +1,13 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿
+using ElectricConsumption;
 
-var offPeakStartHour = 22;
-var offPeakStartMin = 30;
-int lengthHours = 5;
+var tariff = Tariff.CreateTariff(args);
 
-var startTime = new TimeSpan(0, offPeakStartHour, offPeakStartMin, 0);
-var endTime = DateTime.Today.AddMinutes(startTime.TotalMinutes).AddHours(lengthHours).TimeOfDay;
+var lines = await File.ReadAllLinesAsync(@"/Users/ash/Downloads/consumption.csv");
 
-var lines = await File.ReadAllLinesAsync(@"/Users/ashleyjackson/Downloads/consumption.csv");
+List<DailyConsumption> consumptionList = new List<DailyConsumption>();
+
+Console.WriteLine($"[TARIFF]: PeakRate: {tariff.PeakRate}");
 
 for (var index = 1; index < lines.Length; index++)
 {
@@ -15,20 +15,63 @@ for (var index = 1; index < lines.Length; index++)
     var data = line.Split(",");
 
     var readingStartDate = DateTimeOffset.Parse(data[1]).LocalDateTime;
-    
-    Console.WriteLine($"Date: ({data[1]}) {readingStartDate} IsOffPeak {readingStartDate.IsOffPeak(startTime, endTime)}");
+    var consumption = GetValue<double>(data[0]);
+
+    AddReadingToDay(readingStartDate, consumption, tariff);
+ }
+
+// foreach (var day in consumptionList.Select(x => new
+//          {
+//              x.Date, x.PeakConsumption, x.OffPeakConsumption, 
+//              OffPeakCost = (x.OffPeakConsumption * tariff.OffPeakRate)/100,
+//              PeakCost = (x.PeakConsumption * tariff.PeakRate)/100,
+//              TotalCost = (x.OffPeakConsumption * tariff.OffPeakRate)/100 + (x.PeakConsumption * tariff.PeakRate)/100
+//          }))
+// {
+//     Console.WriteLine($"[{day.Date:dd-MMM-yy}]: OffPeak {day.OffPeakConsumption:N4}\tPeak {day.PeakConsumption:n4}\tOffPeak Cost {day.OffPeakCost:C}\tPeakCost{day.PeakCost:C}\tTotalCost {day.TotalCost:C}");
+// }
+
+foreach (var day in consumptionList.Select(x => new
+         {
+             x.Date, x.PeakConsumption, x.OffPeakConsumption, 
+             OffPeakCost = (x.OffPeakConsumption * tariff.OffPeakRate)/100,
+             PeakCost = (x.PeakConsumption * tariff.PeakRate)/100,
+             TotalCost = (x.OffPeakConsumption * tariff.OffPeakRate)/100 + (x.PeakConsumption * tariff.PeakRate)/100
+         })
+             .GroupBy(x => x.Date.Month, (key, t)=> new
+             {
+                 Date = key.ToString("MMM"),
+                 OffPeakConsumption = t.Sum(y => y.OffPeakConsumption),
+                 PeakConsumption = t.Sum(y => y.PeakConsumption),
+                 OffPeakCost = t.Sum(y => y.OffPeakCost),
+                 PeakCost = t.Sum(y => y.PeakCost),
+                 TotalCost = t.Sum(y => y.TotalCost),
+             })
+         )
+{
+    Console.WriteLine($"[{day.Date}]: OffPeak {day.OffPeakConsumption:N4}\tPeak {day.PeakConsumption:n4}\tOffPeak Cost {day.OffPeakCost:C}\tPeakCost {day.PeakCost:C}\tTotalCost {day.TotalCost:C}");
 }
 
-public static class Extensions
+void AddReadingToDay(DateTime dateTime, double consumption, Tariff tariff)
 {
-    public static bool IsOffPeak(this DateTime date, TimeSpan startTime, TimeSpan endTime)
+    if (consumptionList.All(x => x.Date != dateTime.Date))
     {
-        return startTime.IsBeforeMidnight()
-            ? !(date.TimeOfDay >= endTime && date.TimeOfDay < startTime)
-            : date.TimeOfDay >= startTime && date.TimeOfDay < endTime;
+        consumptionList.Add(new DailyConsumption(dateTime.Date));
     }
 
-    public static bool IsBeforeMidnight(this TimeSpan time) => time.Hours is > 18 and <= 23;
-    
-    public static bool Between(this DateTime @this, DateTime minValue, DateTime maxValue) => minValue.CompareTo(@this) == -1 && @this.CompareTo(maxValue) == -1;
+    var dailyConsumption = consumptionList.Single(x => x.Date == dateTime.Date);
+
+    if (dateTime.IsOffPeak(tariff.OffPeakStart, tariff.OffPeakEnd))
+    {
+        dailyConsumption.OffPeakConsumption += consumption;
+    }
+    else
+    {
+        dailyConsumption.PeakConsumption += consumption;
+    }
+}
+
+T GetValue<T>(string value) 
+{
+    return (T)Convert.ChangeType(value, typeof(T));
 }
